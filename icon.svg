@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1b1a18" />
+  <text
+    x="50%"
+    y="54%"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="Fraunces, Times New Roman, serif"
+    font-size="220"
+    font-weight="700"
+    fill="#f5efe6"
+  >
+    TN
+  </text>
+</svg>
