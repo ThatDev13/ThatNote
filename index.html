@@ -29,7 +29,7 @@
           </div>
         </div>
         <div class="top-actions">
-          <button class="ghost" id="resetBtn" type="button">New Session</button>
+          <button class="ghost" id="newSessionBtn" type="button" disabled>New Session</button>
           <button class="primary" id="exportBtn" type="button" disabled>Export</button>
         </div>
       </header>
@@ -58,7 +58,19 @@
               <ul>
                 <li>Use `$E=mc^2$` for inline math, `$$\\int_0^1 x^2 dx$$` for blocks.</li>
                 <li>Export saves Markdown/LaTeX as .md and Rich Text as .html.</li>
+                <li>Use the PDF button to download a PDF version of your note.</li>
+                <li>The New Session button allows you to start a fresh note.</li>
+                <li>The Reset button clears the current note and starts a new session.</li>
+                <li>The Export button saves your note in the selected format.</li>
               </ul>
+            </div>
+            
+            <div class="history-section hidden" id="historySection">
+              <div class="history-header">
+                <h2>Recent Sessions</h2>
+                <button class="ghost small" id="clearHistoryBtn" type="button">Clear</button>
+              </div>
+              <div class="history-list" id="historyList"></div>
             </div>
           </div>
         </section>

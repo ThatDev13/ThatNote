@@ -4,6 +4,7 @@ const preview = document.getElementById("preview");
 const previewPane = document.getElementById("previewPane");
 const noteName = document.getElementById("noteName");
 const exportBtn = document.getElementById("exportBtn");
+const pdfBtn = document.getElementById("pdfBtn");
 const resetBtn = document.getElementById("resetBtn");
 const statusText = document.getElementById("statusText");
 const sessionModal = document.getElementById("sessionModal");
@@ -23,6 +24,43 @@ let modeContent = {
   markdown: defaultTemplates.markdown,
   latex: defaultTemplates.latex,
   rich: defaultTemplates.rich,
+};
+
+let currentSessionId = Date.now().toString();
+let historyTimeout;
+
+const saveToHistory = () => {
+  saveCurrentContent();
+  const history = JSON.parse(localStorage.getItem("thatnote.history") || "[]");
+  
+  const entry = {
+    id: currentSessionId,
+    name: noteName.value.trim() || "Untitled",
+    date: new Date().toISOString(),
+    mode: currentMode,
+    content: modeContent,
+    preview: (currentMode === "rich" ? richEditor.innerText : markdownEditor.value).substring(0, 80).replace(/\n/g, " ")
+  };
+
+  const existingIndex = history.findIndex(h => h.id === currentSessionId);
+  if (existingIndex >= 0) {
+    history[existingIndex] = entry;
+    // Move to top
+    history.unshift(history.splice(existingIndex, 1)[0]);
+  } else {
+    history.unshift(entry);
+  }
+
+  if (history.length > 10) {
+    history.pop();
+  }
+
+  localStorage.setItem("thatnote.history", JSON.stringify(history));
+};
+
+const triggerHistorySave = () => {
+  clearTimeout(historyTimeout);
+  historyTimeout = setTimeout(saveToHistory, 1000);
 };
 
 const configureMarked = () => {
@@ -111,6 +149,7 @@ const setMode = (mode, force = false) => {
 };
 
 const startNewSession = () => {
+  currentSessionId = Date.now().toString();
   modeContent = {
     markdown: defaultTemplates.markdown,
     latex: defaultTemplates.latex,
@@ -120,15 +159,26 @@ const startNewSession = () => {
   fileInput.value = "";
   setMode("markdown", true);
   setStatus("Editing");
+  if (resetBtn) resetBtn.disabled = true;
 };
 
 const showSessionModal = () => {
+  if (!sessionModal) {
+    return;
+  }
+
   sessionModal.classList.remove("hidden");
+  sessionModal.toggleAttribute("hidden", false);
   sessionModal.setAttribute("aria-hidden", "false");
 };
 
 const hideSessionModal = () => {
+  if (!sessionModal) {
+    return;
+  }
+
   sessionModal.classList.add("hidden");
+  sessionModal.toggleAttribute("hidden", true);
   sessionModal.setAttribute("aria-hidden", "true");
 };
 
@@ -138,12 +188,15 @@ window.ThatNoteModal = {
 };
 
 const applyImport = (content, mode, name) => {
+  currentSessionId = Date.now().toString();
   modeContent[mode] = content;
   if (name) {
     noteName.value = name;
   }
   setMode(mode, true);
   setStatus("Editing");
+  if (resetBtn) resetBtn.disabled = false;
+  triggerHistorySave();
 };
 
 const loadSessionImport = () => {
@@ -167,11 +220,17 @@ markdownEditor.addEventListener("input", () => {
   if (currentMode !== "rich") {
     updatePreview();
   }
+  if (resetBtn) resetBtn.disabled = false;
+  triggerHistorySave();
 });
 
 richEditor.addEventListener("input", () => {
   setStatus("Unsaved changes");
+  if (resetBtn) resetBtn.disabled = false;
+  triggerHistorySave();
 });
+
+noteName.addEventListener("input", triggerHistorySave);
 
 exportBtn.addEventListener("click", () => {
   const name = noteName.value.trim() || "thatnote";
@@ -197,9 +256,30 @@ exportBtn.addEventListener("click", () => {
   setStatus("Exported");
 });
 
-resetBtn.addEventListener("click", () => {
-  showSessionModal();
-});
+if (pdfBtn) {
+  pdfBtn.addEventListener("click", () => {
+    const content = currentMode === "rich" ? richEditor : preview;
+    const opt = {
+      margin: 0.5,
+      filename: (noteName.value.trim() || "thatnote") + ".pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
+    };
+    // @ts-ignore
+    if (window.html2pdf) {
+      window.html2pdf().set(opt).from(content).save();
+    } else {
+      alert("PDF library not loaded.");
+    }
+  });
+}
+
+if (resetBtn) {
+  resetBtn.addEventListener("click", () => {
+    showSessionModal();
+  });
+}
 
 modalNew.addEventListener("click", () => {
   hideSessionModal();
@@ -220,16 +300,18 @@ document.addEventListener("click", (event) => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !sessionModal.classList.contains("hidden")) {
+  if (event.key === "Escape" && sessionModal && !sessionModal.classList.contains("hidden")) {
     hideSessionModal();
   }
 });
 
-sessionModal.addEventListener("click", (event) => {
-  if (event.target === sessionModal) {
-    hideSessionModal();
-  }
-});
+if (sessionModal) {
+  sessionModal.addEventListener("click", (event) => {
+    if (event.target === sessionModal) {
+      hideSessionModal();
+    }
+  });
+}
 
 fileInput.addEventListener("change", (event) => {
   const file = event.target.files[0];
@@ -256,17 +338,15 @@ modeButtons.forEach((button) => {
 });
 
 window.addEventListener("DOMContentLoaded", () => {
-  setStatus("Ready");
-  setMode("markdown", true);
+  hideSessionModal();
+
   const imported = loadSessionImport();
   if (!imported) {
-    window.setTimeout(() => {
-      showSessionModal();
-    }, 50);
+    startNewSession();
   }
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("sw.js").catch(() => {
-      setStatus("Ready");
+      setStatus("Editing");
     });
   }
 });
