@@ -429,6 +429,10 @@ body.beta-mode .preview {
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+.ai-fab.hidden {
+  display: none !important;
+}
+
 .ai-chat {
   position: fixed;
   right: 20px;
@@ -443,6 +447,10 @@ body.beta-mode .preview {
   border: 1px solid rgba(255, 255, 255, 0.5);
   backdrop-filter: blur(12px);
   box-shadow: var(--shadow);
+}
+
+.ai-chat.hidden {
+  display: none !important;
 }
 
 .ai-chat-head {

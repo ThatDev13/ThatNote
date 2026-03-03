@@ -50,6 +50,7 @@ const openAiChat = () => {
     return;
   }
   aiChat.classList.remove("hidden");
+  aiChat.setAttribute("aria-hidden", "false");
 };
 
 const closeAiChat = () => {
@@ -57,6 +58,7 @@ const closeAiChat = () => {
     return;
   }
   aiChat.classList.add("hidden");
+  aiChat.setAttribute("aria-hidden", "true");
 };
 
 const saveToHistory = () => {
@@ -262,6 +264,38 @@ const extractResponseText = (data) => {
   return chunks.join("\n").trim();
 };
 
+const localFallbackGenerate = (sourceText, instruction) => {
+  const text = sourceText || "";
+  const prompt = (instruction || "").toLowerCase();
+
+  if (!text.trim()) {
+    return "# Neue Notiz\n\nStarte hier mit deinem Inhalt.";
+  }
+
+  if (prompt.includes("summar") || prompt.includes("zusammen")) {
+    const sentences = text
+      .replace(/\n+/g, " ")
+      .split(/(?<=[.!?])\s+/)
+      .filter(Boolean)
+      .slice(0, 5);
+    return `## Zusammenfassung\n\n- ${sentences.join("\n- ")}`;
+  }
+
+  if (prompt.includes("continue") || prompt.includes("fort")) {
+    return `${text}\n\nNächster Schritt: Beschreibe hier den nächsten Abschnitt mit konkreten Details und einem klaren Abschluss.`;
+  }
+
+  if (prompt.includes("improve") || prompt.includes("verbess")) {
+    const lines = text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    return lines.map((line) => (line.endsWith(".") ? line : `${line}.`)).join("\n\n");
+  }
+
+  return `${text}\n\n[AI-Hinweis] Aufgabe: ${instruction}`;
+};
+
 const applyTextToCurrentNote = (text) => {
   if (currentMode === "rich") {
     richEditor.innerText = text;
@@ -323,8 +357,7 @@ const generateWithAI = async (instruction) => {
     const result = extractResponseText(data);
 
     if (!result) {
-      setAiStatus("Keine Ausgabe von der AI");
-      return;
+      throw new Error("Keine Ausgabe von der API");
     }
 
     pendingAiChange = {
@@ -338,9 +371,17 @@ const generateWithAI = async (instruction) => {
     setAiStatus("Änderung angewendet. Annehmen oder Ablehnen?");
     setStatus("AI change applied");
   } catch (error) {
+    const fallbackResult = localFallbackGenerate(beforeText, prompt);
+    pendingAiChange = {
+      beforeText,
+      afterText: fallbackResult,
+      mode: currentMode,
+    };
+    applyTextToCurrentNote(fallbackResult);
+    setPendingButtons(true);
     const message = error && error.message ? error.message : "Unbekannter Fehler";
-    setAiStatus(`AI Fehler: ${message}`);
-    setStatus("AI request failed");
+    setAiStatus(`API-Fehler, Fallback genutzt: ${message}`);
+    setStatus("AI fallback applied");
     console.error(error);
   } finally {
     isAiLoading = false;
@@ -571,6 +612,12 @@ if (aiChatClose) {
     closeAiChat();
   });
 }
+
+window.addEventListener("blur", () => {
+  if (aiChat && !aiChat.classList.contains("hidden")) {
+    closeAiChat();
+  }
+});
 
 if (aiSendBtn) {
   aiSendBtn.addEventListener("click", () => {
