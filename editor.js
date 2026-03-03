@@ -24,7 +24,7 @@ const aiRejectBtn = document.getElementById("aiRejectBtn");
 const aiStatus = document.getElementById("aiStatus");
 const quickActionButtons = document.querySelectorAll(".ai-action");
 
-const DEFAULT_OPENAI_API_KEY = "sk-abcdef1234567890abcdef1234567890abcdef12";
+const DEFAULT_OPENAI_API_KEY = "sk-abcd1234qrstuvwxabcd1234qrstuvwxabcd1234";
 
 const defaultTemplates = {
   markdown: `# Welcome to ThatNote\n\nStart typing in **Markdown** or add inline math like $E=mc^2$.\n\n## Quick math\n\n$$\\int_0^1 x^2 dx = \\frac{1}{3}$$\n\n- Clean previews\n- Export as Markdown\n`,
@@ -313,6 +313,36 @@ const setPendingButtons = (enabled) => {
   if (aiRejectBtn) aiRejectBtn.disabled = !enabled;
 };
 
+const requestOpenAIRewrite = async ({ mode, text, prompt }) => {
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${DEFAULT_OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4.1-mini",
+      temperature: 0.6,
+      max_output_tokens: 1200,
+      input: `Editor mode: ${mode}\n\nCurrent note:\n${text}\n\nTask:\n${prompt}\n\nReturn only the final rewritten note text without explanations.`,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "AI request failed");
+  }
+
+  const data = await response.json();
+  const output = typeof data.output_text === "string" ? data.output_text.trim() : extractResponseText(data);
+
+  if (!output) {
+    throw new Error("Keine Ausgabe von der API");
+  }
+
+  return output;
+};
+
 const generateWithAI = async (instruction) => {
   if (isAiLoading) {
     return;
@@ -332,25 +362,11 @@ const generateWithAI = async (instruction) => {
   setStatus("AI is generating...");
 
   try {
-    const response = await fetch("/api/ai", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        mode: currentMode,
-        text: beforeText,
-        prompt,
-      }),
+    const result = await requestOpenAIRewrite({
+      mode: currentMode,
+      text: beforeText,
+      prompt,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(errorText || "AI request failed");
-    }
-
-    const data = await response.json();
-    const result = typeof data.outputText === "string" ? data.outputText.trim() : extractResponseText(data);
 
     if (!result) {
       throw new Error("Keine Ausgabe von der API");
