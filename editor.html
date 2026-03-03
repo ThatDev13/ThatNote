@@ -51,7 +51,11 @@
               <button class="mode-btn" data-mode="latex" type="button">LaTeX</button>
               <button class="mode-btn" data-mode="rich" type="button">Rich Text</button>
             </div>
-            <div class="status" id="statusText">Ready</div>
+            <div class="editor-meta">
+              <button class="mode-btn beta-btn" id="betaModeBtn" type="button" aria-pressed="false">Beta Mode</button>
+              <div class="status" id="noteStats">0 words • 0 chars</div>
+              <div class="status" id="statusText">Ready</div>
+            </div>
           </div>
 
           <div class="editor-body">
@@ -73,6 +77,27 @@
         </section>
       </main>
     </div>
+
+    <button class="ai-fab hidden" id="aiFab" type="button" aria-label="Open AI chat">AI</button>
+
+    <aside class="ai-chat hidden" id="aiChat" aria-live="polite">
+      <div class="ai-chat-head">
+        <div class="pane-title">AI Chat</div>
+        <button class="ghost small" id="aiChatClose" type="button">Close</button>
+      </div>
+      <textarea id="aiPrompt" class="assistant-prompt" placeholder="Was soll der Agent direkt in deinem Text ändern?"></textarea>
+      <div class="assistant-row">
+        <button class="ghost small ai-action" data-action="summarize" type="button">Summarize</button>
+        <button class="ghost small ai-action" data-action="improve" type="button">Improve</button>
+        <button class="ghost small ai-action" data-action="continue" type="button">Continue</button>
+      </div>
+      <button class="primary" id="aiSendBtn" type="button">In Text anwenden</button>
+      <div class="assistant-row">
+        <button class="ghost small" id="aiAcceptBtn" type="button" disabled>Änderung annehmen</button>
+        <button class="ghost small" id="aiRejectBtn" type="button" disabled>Änderung ablehnen</button>
+      </div>
+      <div class="status" id="aiStatus">Bereit</div>
+    </aside>
 
     <div class="modal hidden" id="sessionModal" aria-hidden="true" hidden>
       <div class="modal-card">

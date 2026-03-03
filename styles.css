@@ -204,6 +204,24 @@ button.ghost {
   margin-bottom: 20px;
 }
 
+.editor-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.beta-btn {
+  background: rgba(255, 255, 255, 0.78);
+}
+
+body.beta-mode .beta-btn,
+.beta-btn.is-active {
+  background: var(--ink);
+  color: var(--cream);
+  border-color: var(--ink);
+}
+
 .mode-select {
   display: flex;
   gap: 8px;
@@ -258,6 +276,46 @@ button.ghost {
   gap: 24px;
 }
 
+body.beta-mode {
+  overflow: hidden;
+}
+
+body.beta-mode .shell {
+  height: calc(100vh - 98px);
+  padding: 12px 12px 14px;
+  overflow: hidden;
+}
+
+body.beta-mode .panel {
+  height: 100%;
+  border-radius: 24px;
+  padding: 16px;
+}
+
+body.beta-mode .editor-header {
+  margin-bottom: 12px;
+}
+
+body.beta-mode .editor-body {
+  height: calc(100% - 72px);
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+body.beta-mode .panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.12));
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+}
+
+body.beta-mode .editor-pane,
+body.beta-mode .preview-pane,
+body.beta-mode .assistant-pane {
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.46));
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(10px);
+}
+
 .editor-pane,
 .preview-pane {
   background: rgba(255, 255, 255, 0.9);
@@ -268,6 +326,12 @@ button.ghost {
   display: flex;
   flex-direction: column;
   min-height: 380px;
+}
+
+body.beta-mode .editor-pane,
+body.beta-mode .preview-pane {
+  min-height: 0;
+  height: 100%;
 }
 
 .pane-title {
@@ -287,6 +351,14 @@ textarea {
   outline: none;
   background: transparent;
   color: var(--ink);
+}
+
+body.beta-mode #markdownEditor,
+body.beta-mode .rich-editor,
+body.beta-mode .preview {
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
 }
 
 .rich-editor {
@@ -338,6 +410,123 @@ textarea {
 
 .preview.latex-only {
   font-size: 18px;
+}
+
+.ai-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 20px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  z-index: 40;
+  background: var(--ink);
+  color: var(--cream);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.ai-chat {
+  position: fixed;
+  right: 20px;
+  bottom: 92px;
+  width: min(92vw, 380px);
+  display: grid;
+  gap: 10px;
+  z-index: 42;
+  padding: 14px;
+  border-radius: 18px;
+  background: linear-gradient(140deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.64));
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+}
+
+.ai-chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assistant-pane {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: var(--soft-shadow);
+  border: 1px solid rgba(27, 26, 24, 0.06);
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
+  gap: 12px;
+}
+
+.assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assistant-group {
+  display: grid;
+  gap: 8px;
+}
+
+.assistant-group label {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.assistant-group input,
+.assistant-prompt,
+.assistant-output {
+  border: 1px solid rgba(27, 26, 24, 0.15);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.84);
+  color: var(--ink);
+}
+
+.assistant-prompt {
+  min-height: 84px;
+  resize: vertical;
+}
+
+.assistant-output {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.assistant-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.snapshot-list {
+  display: grid;
+  gap: 8px;
+  max-height: 180px;
+  overflow: auto;
+}
+
+.snapshot-item {
+  border: 1px solid rgba(27, 26, 24, 0.1);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.snapshot-item:hover {
+  box-shadow: var(--soft-shadow);
+  transform: translateY(-1px);
 }
 
 .modal {
@@ -401,6 +590,24 @@ textarea {
   .editor-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .editor-meta {
+    align-items: flex-start;
+  }
+
+  body.beta-mode .shell {
+    height: calc(100vh - 130px);
+  }
+
+  body.beta-mode .editor-body {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-chat {
+    right: 10px;
+    left: 10px;
+    width: auto;
   }
 }
 
