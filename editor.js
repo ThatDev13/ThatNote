@@ -45,6 +45,20 @@ let isBetaMode = localStorage.getItem("thatnote.betaMode") === "1";
 let isAiLoading = false;
 let pendingAiChange = null;
 
+const openAiChat = () => {
+  if (!aiChat) {
+    return;
+  }
+  aiChat.classList.remove("hidden");
+};
+
+const closeAiChat = () => {
+  if (!aiChat) {
+    return;
+  }
+  aiChat.classList.add("hidden");
+};
+
 const saveToHistory = () => {
   saveCurrentContent();
   const history = JSON.parse(localStorage.getItem("thatnote.history") || "[]");
@@ -284,37 +298,20 @@ const generateWithAI = async (instruction) => {
   setStatus("AI is generating...");
 
   try {
+    const payload = {
+      model: "gpt-4.1-mini",
+      temperature: 0.6,
+      max_output_tokens: 1200,
+      input: `Editor mode: ${currentMode}\n\nCurrent note:\n${beforeText}\n\nTask:\n${prompt}\n\nReturn only the final rewritten note text without explanations.`,
+    };
+
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${DEFAULT_OPENAI_API_KEY}`,
       },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        temperature: 0.6,
-        max_output_tokens: 1200,
-        input: [
-          {
-            role: "system",
-            content: [
-              {
-                type: "text",
-                text: "You are an editing agent. Rewrite the full note directly based on the user task. Return only the final rewritten note text without explanations.",
-              },
-            ],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `Editor mode: ${currentMode}\n\nCurrent note:\n${beforeText}\n\nTask:\n${prompt}`,
-              },
-            ],
-          },
-        ],
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -341,7 +338,8 @@ const generateWithAI = async (instruction) => {
     setAiStatus("Änderung angewendet. Annehmen oder Ablehnen?");
     setStatus("AI change applied");
   } catch (error) {
-    setAiStatus("AI Fehler");
+    const message = error && error.message ? error.message : "Unbekannter Fehler";
+    setAiStatus(`AI Fehler: ${message}`);
     setStatus("AI request failed");
     console.error(error);
   } finally {
@@ -561,13 +559,16 @@ if (betaModeBtn) {
 
 if (aiFab) {
   aiFab.addEventListener("click", () => {
+    if (!aiChat) {
+      return;
+    }
     aiChat.classList.toggle("hidden");
   });
 }
 
 if (aiChatClose) {
   aiChatClose.addEventListener("click", () => {
-    aiChat.classList.add("hidden");
+    closeAiChat();
   });
 }
 
@@ -598,6 +599,24 @@ quickActionButtons.forEach((button) => {
   });
 });
 
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && aiChat && !aiChat.classList.contains("hidden")) {
+    closeAiChat();
+  }
+});
+
+document.addEventListener("click", (event) => {
+  if (!aiChat || aiChat.classList.contains("hidden")) {
+    return;
+  }
+
+  const insideChat = aiChat.contains(event.target);
+  const onFab = aiFab && aiFab.contains(event.target);
+  if (!insideChat && !onFab) {
+    closeAiChat();
+  }
+});
+
 window.addEventListener("DOMContentLoaded", () => {
   hideSessionModal();
 
@@ -607,6 +626,7 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   setBetaMode(isBetaMode);
+  closeAiChat();
   setPendingButtons(false);
   setAiStatus("Bereit");
   updateStats();
