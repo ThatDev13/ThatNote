@@ -85,6 +85,14 @@
         <div class="pane-title">AI Chat</div>
         <button class="ghost small" id="aiChatClose" type="button">Close</button>
       </div>
+      <div class="assistant-group">
+        <label for="aiApiKeyInput">OpenAI API Key (optional override)</label>
+        <input id="aiApiKeyInput" type="password" placeholder="sk-..." autocomplete="off" />
+        <div class="assistant-row">
+          <button class="ghost small" id="aiApiKeySave" type="button">Key speichern</button>
+          <button class="ghost small" id="aiApiKeyClear" type="button">Key löschen</button>
+        </div>
+      </div>
       <textarea id="aiPrompt" class="assistant-prompt" placeholder="Was soll der Agent direkt in deinem Text ändern?"></textarea>
       <div class="assistant-row">
         <button class="ghost small ai-action" data-action="summarize" type="button">Summarize</button>

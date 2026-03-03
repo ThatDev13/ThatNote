@@ -500,6 +500,10 @@ body.beta-mode .preview {
   color: var(--ink);
 }
 
+.ai-chat .assistant-group {
+  margin-bottom: 2px;
+}
+
 .assistant-prompt {
   min-height: 84px;
   resize: vertical;

@@ -24,7 +24,7 @@ const aiRejectBtn = document.getElementById("aiRejectBtn");
 const aiStatus = document.getElementById("aiStatus");
 const quickActionButtons = document.querySelectorAll(".ai-action");
 
-const DEFAULT_OPENAI_API_KEY = "sk-abcd5678efgh1234abcd5678efgh1234abcd5678";
+const DEFAULT_OPENAI_API_KEY = "sk-abcdef1234567890abcdef1234567890abcdef12";
 
 const defaultTemplates = {
   markdown: `# Welcome to ThatNote\n\nStart typing in **Markdown** or add inline math like $E=mc^2$.\n\n## Quick math\n\n$$\\int_0^1 x^2 dx = \\frac{1}{3}$$\n\n- Clean previews\n- Export as Markdown\n`,
@@ -332,20 +332,16 @@ const generateWithAI = async (instruction) => {
   setStatus("AI is generating...");
 
   try {
-    const payload = {
-      model: "gpt-4.1-mini",
-      temperature: 0.6,
-      max_output_tokens: 1200,
-      input: `Editor mode: ${currentMode}\n\nCurrent note:\n${beforeText}\n\nTask:\n${prompt}\n\nReturn only the final rewritten note text without explanations.`,
-    };
-
-    const response = await fetch("https://api.openai.com/v1/responses", {
+    const response = await fetch("/api/ai", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${DEFAULT_OPENAI_API_KEY}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        mode: currentMode,
+        text: beforeText,
+        prompt,
+      }),
     });
 
     if (!response.ok) {
@@ -354,7 +350,7 @@ const generateWithAI = async (instruction) => {
     }
 
     const data = await response.json();
-    const result = extractResponseText(data);
+    const result = typeof data.outputText === "string" ? data.outputText.trim() : extractResponseText(data);
 
     if (!result) {
       throw new Error("Keine Ausgabe von der API");
