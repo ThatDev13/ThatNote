@@ -19,7 +19,14 @@ const MIME_TYPES = {
   ".ico": "image/x-icon",
 };
 
+const setCorsHeaders = (res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+};
+
 const sendJson = (res, status, payload) => {
+  setCorsHeaders(res);
   res.writeHead(status, { "Content-Type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload));
 };
@@ -54,6 +61,7 @@ const serveFile = (reqPath, res) => {
 
       const ext = path.extname(filePath).toLowerCase();
       const type = MIME_TYPES[ext] || "application/octet-stream";
+      setCorsHeaders(res);
       res.writeHead(200, { "Content-Type": type });
       res.end(data);
     });
@@ -142,6 +150,13 @@ const handleAi = async (req, res) => {
 
 const server = http.createServer((req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
+
+  if (req.method === "OPTIONS") {
+    setCorsHeaders(res);
+    res.writeHead(204);
+    res.end();
+    return;
+  }
 
   if (req.method === "POST" && url.pathname === "/api/ai") {
     handleAi(req, res);

@@ -313,7 +313,51 @@ const setPendingButtons = (enabled) => {
   if (aiRejectBtn) aiRejectBtn.disabled = !enabled;
 };
 
-const requestOpenAIRewrite = async ({ mode, text, prompt }) => {
+const buildRewriteInput = (mode, text, prompt) => {
+  return `Editor mode: ${mode}\n\nCurrent note:\n${text}\n\nTask:\n${prompt}\n\nReturn only the final rewritten note text without explanations.`;
+};
+
+const requestViaProxy = async ({ mode, text, prompt }) => {
+  const proxyUrls = ["/api/ai", "http://localhost:3000/api/ai"];
+  let lastError = null;
+
+  for (const url of proxyUrls) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode,
+          text,
+          prompt,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        lastError = new Error(errorText || `Proxy request failed (${response.status})`);
+        continue;
+      }
+
+      const data = await response.json();
+      const output = typeof data.outputText === "string" ? data.outputText.trim() : "";
+      if (!output) {
+        lastError = new Error("Proxy lieferte keine Ausgabe");
+        continue;
+      }
+
+      return output;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Proxy nicht erreichbar");
+};
+
+const requestDirectOpenAI = async ({ mode, text, prompt }) => {
   const response = await fetch("https://api.openai.com/v1/responses", {
     method: "POST",
     headers: {
@@ -324,7 +368,7 @@ const requestOpenAIRewrite = async ({ mode, text, prompt }) => {
       model: "gpt-4.1-mini",
       temperature: 0.6,
       max_output_tokens: 1200,
-      input: `Editor mode: ${mode}\n\nCurrent note:\n${text}\n\nTask:\n${prompt}\n\nReturn only the final rewritten note text without explanations.`,
+      input: buildRewriteInput(mode, text, prompt),
     }),
   });
 
@@ -341,6 +385,20 @@ const requestOpenAIRewrite = async ({ mode, text, prompt }) => {
   }
 
   return output;
+};
+
+const requestOpenAIRewrite = async ({ mode, text, prompt }) => {
+  try {
+    return await requestViaProxy({ mode, text, prompt });
+  } catch (proxyError) {
+    try {
+      return await requestDirectOpenAI({ mode, text, prompt });
+    } catch (directError) {
+      const proxyMessage = proxyError && proxyError.message ? proxyError.message : "Proxy fehlgeschlagen";
+      const directMessage = directError && directError.message ? directError.message : "Direktaufruf fehlgeschlagen";
+      throw new Error(`Proxy: ${proxyMessage} | Direct: ${directMessage}`);
+    }
+  }
 };
 
 const generateWithAI = async (instruction) => {
