@@ -36,7 +36,7 @@ fileInput.addEventListener("change", (event) => {
   }
 
   const extension = file.name.split(".").pop().toLowerCase();
-  const inferredMode = extension === "html" ? "rich" : "markdown";
+  const inferredMode = extension === "tex" || extension === "latex" ? "latex" : "markdown";
 
   const reader = new FileReader();
   reader.onload = (e) => {

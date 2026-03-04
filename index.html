@@ -25,7 +25,7 @@
           </span>
           <div>
             <p class="brand-title">ThatNote</p>
-            <p class="brand-subtitle">Rich Text / Markdown / LaTeX Studio</p>
+            <p class="brand-subtitle">Markdown / LaTeX Studio</p>
           </div>
         </div>
         <div class="top-actions">
@@ -40,7 +40,7 @@
             <div class="hero">
               <h1>Start crafting a clean note.</h1>
               <p>
-                Import a file or begin from a blank canvas. Switch between Rich Text, Markdown, and LaTeX in the editor.
+                Import a file or begin from a blank canvas. Switch between Markdown and LaTeX in the editor.
               </p>
             </div>
             <div class="card-grid">
@@ -50,14 +50,14 @@
               </button>
               <label class="card" for="fileInput">
                 <span class="card-title">Import existing file</span>
-                <span class="card-body">Load a .md, .txt, or .html document.</span>
+                <span class="card-body">Load a .md, .txt, .tex, or .latex document.</span>
               </label>
             </div>
             <div class="tips">
               <p>Tips:</p>
               <ul>
                 <li>Use `$E=mc^2$` for inline math, `$$\\int_0^1 x^2 dx$$` for blocks.</li>
-                <li>Export saves Markdown/LaTeX as .md and Rich Text as .html.</li>
+                <li>Export saves notes as .md files.</li>
                 <li>Use the PDF button to download a PDF version of your note.</li>
                 <li>The New Session button allows you to start a fresh note.</li>
                 <li>The Reset button clears the current note and starts a new session.</li>
@@ -77,7 +77,7 @@
 
       </main>
     </div>
-    <input id="fileInput" type="file" accept=".md,.txt,.html" hidden />
+    <input id="fileInput" type="file" accept=".md,.txt,.tex,.latex" hidden />
 
     <script src="start.js"></script>
   </body>

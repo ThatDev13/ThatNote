@@ -20,7 +20,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   </head>
-  <body>
+  <body class="editor-fullscreen">
     <div class="page">
       <header class="topbar">
         <div class="brand">
@@ -29,7 +29,7 @@
           </span>
           <div>
             <p class="brand-title">ThatNote</p>
-            <p class="brand-subtitle">Rich Text / Markdown / LaTeX Studio</p>
+            <p class="brand-subtitle">Markdown / LaTeX Studio</p>
           </div>
         </div>
         <div class="top-actions">
@@ -49,7 +49,6 @@
             <div class="mode-select" role="group" aria-label="Editor mode">
               <button class="mode-btn is-active" data-mode="markdown" type="button">Markdown</button>
               <button class="mode-btn" data-mode="latex" type="button">LaTeX</button>
-              <button class="mode-btn" data-mode="rich" type="button">Rich Text</button>
             </div>
             <div class="status" id="statusText">Ready</div>
           </div>
@@ -58,12 +57,6 @@
             <div class="editor-pane">
               <div class="pane-title">Write</div>
               <textarea id="markdownEditor" placeholder="Write Markdown or LaTeX here..."></textarea>
-              <div
-                id="richEditor"
-                class="rich-editor hidden"
-                contenteditable="true"
-                data-placeholder="Write rich text here..."
-              ></div>
             </div>
             <div class="preview-pane" id="previewPane">
               <div class="pane-title">Live preview</div>
@@ -96,13 +89,13 @@
           </button>
           <label class="card" for="fileInput" id="modalImport">
             <span class="card-title">Import existing file</span>
-            <span class="card-body">Load a .md, .txt, or .html document.</span>
+            <span class="card-body">Load a .md, .txt, .tex, or .latex document.</span>
           </label>
         </div>
       </div>
     </div>
 
-    <input id="fileInput" type="file" accept=".md,.txt,.html" hidden />
+    <input id="fileInput" type="file" accept=".md,.txt,.tex,.latex" hidden />
 
     <script src="editor.js"></script>
   </body>

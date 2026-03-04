@@ -1,5 +1,4 @@
 const markdownEditor = document.getElementById("markdownEditor");
-const richEditor = document.getElementById("richEditor");
 const preview = document.getElementById("preview");
 const previewPane = document.getElementById("previewPane");
 const noteName = document.getElementById("noteName");
@@ -16,14 +15,12 @@ const modeButtons = document.querySelectorAll(".mode-btn");
 const defaultTemplates = {
   markdown: `# Welcome to ThatNote\n\nStart typing in **Markdown** or add inline math like $E=mc^2$.\n\n## Quick math\n\n$$\\int_0^1 x^2 dx = \\frac{1}{3}$$\n\n- Clean previews\n- Export as Markdown\n`,
   latex: `\\int_0^1 x^2 dx = \\frac{1}{3}\n\\sum_{n=1}^{\\infty} \\frac{1}{n^2} = \\frac{\\pi^2}{6}`,
-  rich: "<h1>Welcome to ThatNote</h1><p>Write rich text here. Use headings, lists, and emphasis for a polished layout.</p>",
 };
 
 let currentMode = "markdown";
 let modeContent = {
   markdown: defaultTemplates.markdown,
   latex: defaultTemplates.latex,
-  rich: defaultTemplates.rich,
 };
 
 let currentSessionId = Date.now().toString();
@@ -39,7 +36,7 @@ const saveToHistory = () => {
     date: new Date().toISOString(),
     mode: currentMode,
     content: modeContent,
-    preview: (currentMode === "rich" ? richEditor.innerText : markdownEditor.value).substring(0, 80).replace(/\n/g, " ")
+    preview: markdownEditor.value.substring(0, 80).replace(/\n/g, " ")
   };
 
   const existingIndex = history.findIndex(h => h.id === currentSessionId);
@@ -85,10 +82,6 @@ const setStatus = (message) => {
 };
 
 const updatePreview = async () => {
-  if (currentMode === "rich") {
-    return;
-  }
-
   const raw = markdownEditor.value;
   preview.classList.toggle("latex-only", currentMode === "latex");
 
@@ -111,14 +104,19 @@ const updatePreview = async () => {
 };
 
 const saveCurrentContent = () => {
-  if (currentMode === "rich") {
-    modeContent.rich = richEditor.innerHTML;
-  } else {
-    modeContent[currentMode] = markdownEditor.value;
-  }
+  modeContent[currentMode] = markdownEditor.value;
+};
+
+const autoResizeEditor = () => {
+  markdownEditor.style.height = "auto";
+  markdownEditor.style.height = `${markdownEditor.scrollHeight}px`;
 };
 
 const setMode = (mode, force = false) => {
+  if (!(mode in modeContent)) {
+    mode = "markdown";
+  }
+
   if (!force && currentMode === mode) {
     return;
   }
@@ -132,18 +130,10 @@ const setMode = (mode, force = false) => {
     button.classList.toggle("is-active", button.dataset.mode === mode);
   });
 
-  if (mode === "rich") {
-    markdownEditor.classList.add("hidden");
-    richEditor.classList.remove("hidden");
-    previewPane.classList.add("hidden");
-    richEditor.innerHTML = modeContent.rich || defaultTemplates.rich;
-  } else {
-    markdownEditor.classList.remove("hidden");
-    richEditor.classList.add("hidden");
-    previewPane.classList.remove("hidden");
-    markdownEditor.value = modeContent[mode] || defaultTemplates[mode];
-    updatePreview();
-  }
+  previewPane.classList.remove("hidden");
+  markdownEditor.value = modeContent[mode] || defaultTemplates[mode];
+  autoResizeEditor();
+  updatePreview();
 
   setStatus(`Mode: ${mode.toUpperCase()}`);
 };
@@ -153,7 +143,6 @@ const startNewSession = () => {
   modeContent = {
     markdown: defaultTemplates.markdown,
     latex: defaultTemplates.latex,
-    rich: defaultTemplates.rich,
   };
   noteName.value = "";
   fileInput.value = "";
@@ -188,6 +177,10 @@ window.ThatNoteModal = {
 };
 
 const applyImport = (content, mode, name) => {
+  if (!(mode in modeContent)) {
+    mode = "markdown";
+  }
+
   currentSessionId = Date.now().toString();
   modeContent[mode] = content;
   if (name) {
@@ -217,15 +210,8 @@ const loadSessionImport = () => {
 
 markdownEditor.addEventListener("input", () => {
   setStatus("Unsaved changes");
-  if (currentMode !== "rich") {
-    updatePreview();
-  }
-  if (resetBtn) resetBtn.disabled = false;
-  triggerHistorySave();
-});
-
-richEditor.addEventListener("input", () => {
-  setStatus("Unsaved changes");
+  autoResizeEditor();
+  updatePreview();
   if (resetBtn) resetBtn.disabled = false;
   triggerHistorySave();
 });
@@ -234,16 +220,8 @@ noteName.addEventListener("input", triggerHistorySave);
 
 exportBtn.addEventListener("click", () => {
   const name = noteName.value.trim() || "thatnote";
-  let blob;
-  let extension;
-  if (currentMode === "rich") {
-    const html = `<!DOCTYPE html><html><head><meta charset="UTF-8" /></head><body>${richEditor.innerHTML}</body></html>`;
-    blob = new Blob([html], { type: "text/html" });
-    extension = "html";
-  } else {
-    blob = new Blob([markdownEditor.value], { type: "text/markdown" });
-    extension = "md";
-  }
+  const blob = new Blob([markdownEditor.value], { type: "text/markdown" });
+  const extension = "md";
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -257,20 +235,38 @@ exportBtn.addEventListener("click", () => {
 });
 
 if (pdfBtn) {
-  pdfBtn.addEventListener("click", () => {
-    const content = currentMode === "rich" ? richEditor : preview;
+  pdfBtn.addEventListener("click", async () => {
+    await updatePreview();
+
+    const pdfContent = document.createElement("div");
+    pdfContent.style.position = "fixed";
+    pdfContent.style.left = "-99999px";
+    pdfContent.style.top = "0";
+    pdfContent.style.width = "8.5in";
+    pdfContent.style.padding = "0.5in";
+    pdfContent.style.background = "#ffffff";
+    pdfContent.style.color = "#1b1a18";
+    pdfContent.style.fontFamily = '"Space Grotesk", "Trebuchet MS", sans-serif';
+    pdfContent.style.lineHeight = "1.7";
+    pdfContent.innerHTML = preview.innerHTML;
+    document.body.appendChild(pdfContent);
+
     const opt = {
-      margin: 0.5,
+      margin: 0,
       filename: (noteName.value.trim() || "thatnote") + ".pdf",
       image: { type: "jpeg", quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
     };
-    // @ts-ignore
-    if (window.html2pdf) {
-      window.html2pdf().set(opt).from(content).save();
-    } else {
-      alert("PDF library not loaded.");
+
+    try {
+      if (window.html2pdf) {
+        await window.html2pdf().set(opt).from(pdfContent).save();
+      } else {
+        alert("PDF library not loaded.");
+      }
+    } finally {
+      document.body.removeChild(pdfContent);
     }
   });
 }
@@ -320,7 +316,7 @@ fileInput.addEventListener("change", (event) => {
   }
 
   const extension = file.name.split(".").pop().toLowerCase();
-  const inferredMode = extension === "html" ? "rich" : "markdown";
+  const inferredMode = extension === "tex" || extension === "latex" ? "latex" : "markdown";
 
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -339,6 +335,7 @@ modeButtons.forEach((button) => {
 
 window.addEventListener("DOMContentLoaded", () => {
   hideSessionModal();
+  autoResizeEditor();
 
   const imported = loadSessionImport();
   if (!imported) {
